@@ -23,7 +23,7 @@ library(knitr)
 #Import the data and take a look at the fields. 
 #Note that data has been imported into excel and modified to be used for demonstration purposes to maintain confidentiality of the data set.
 
-fileP2 <- './P2 - SQL Database Query2.xlsx'
+fileP2 <- './P2 - SQL Database Query3.xlsx'
 sheetnameP2a <- 'SQL Batch_Additions'
 sheetnameP2b <- 'SQL Orders'
 
@@ -40,19 +40,7 @@ head(OrdersP2)
 
 
 BatchOrdersP2 <- merge(x = BatchP2, y = OrdersP2, by = "LOT_NUM", all.x = TRUE)
-
-#convert material names to IDs
-matfile <- './Material ID.xlsx'
-sheetnameID <- 'use table'
-MatNametoID <- read_excel(matfile,sheet = sheetnameID,col_names = TRUE)
-MatIDP2 <- merge(x = BatchOrdersP2, y = MatNametoID, by = "ACTUAL_PROD", all.x = TRUE)
-
-DataP2 <-  MatIDP2
-
-#Convert data to unidentifiable
-lotmod <- 0
-DataP2$LOT_NUM <- DataP2$LOT_NUM + lotmod
-
+DataP2 <-  BatchOrdersP2
 
 head(DataP2,30)
 
