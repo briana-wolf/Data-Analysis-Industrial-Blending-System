@@ -2,30 +2,49 @@
 title: "Order Blend Accuracy - Plant Comparison"
 output: html_document
 ---
+## Load Packages
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+install.packages("read_excel")
+
 library(dplyr)
 library(tidyverse)
-
+library(lubridate)
+library(ggplot2)
+library(readxl)
+library(ggQC)
+library(sm)
+library(skimr)
+library(qwraps2)
+library(lattice)
+library(reshape2)
 ```
 
-## Importing Data
-We have cleaned data sets from each plant in prior notebooks. Let's check that these datasets are available from those notebooks. 
+## Import Data
+Run R scripts created to clean and organize data for each plant.  
 
 ```{r}
+source('Order Blend Accuracy - P1.R')
+source('Order Blend Accuracy - P2.R')
 
-source('Order Ingredient Accuracy - P2 - 2019-07-21.R')
-source('Order Ingredient Accuracy - P1 - 2019-07-21.R')
+```
+P1 has quite a bit more data than P2 as it sees more production than P2. 
+Considerably more data was removed from P2. P2 is a new system and has had issues setting up reliable data collection. See notebook on P2 data collection analysis. 
+Such facts should be considered with all conclusions. 
+
+```{r}
 
 head(ByingredP2)
 head(ByingredP1)
 
 ```
 
-Let's combine data so that we can plot together. 
+Combine data for plotting.
 
 ```{r}
+#Create Site column to identify which plant data comes from
 ByingredP1$Site <- "P1"
 ByingredP2$Site <- "P2"
 
@@ -35,14 +54,8 @@ ByingredP2[setdiff(names(ByingredP1), names(ByingredP2))] <- NA
 #Combine all data
 iByingredAll <- merge(x = ByingredP1, y = ByingredP2, all = TRUE)
 
-#ByingredAll <- drop_na_(iByingredAll, vars = iByingredAll$LOT_NUM)
-#this drop na was not working well 
-
+#Remove na in key KPI column
 ByingredAll <- iByingredAll[!is.na(iByingredAll$OrderDiff_inPerc),]
-
-ByingredAll$Site <- factor(ByingredAll$Site)
-head(ByingredAll[ByingredAll$Site=="P1",])
-
 
 ```
 <P style="page-break-before: always">
@@ -52,20 +65,19 @@ head(ByingredAll[ByingredAll$Site=="P1",])
 ##Comparision by Order Size
 
 ```{r}
-#Let's look at just YTD because there is no 2018 P2 data
-plotdata1 <- ByingredAll %>% filter(EndTime > "2019-01-01")
-
-ggplot(data=plotdata1)+ geom_point(aes(x=plotdata1$EndTime, y=plotdata1$OrderDiff_inPerc,color= plotdata1$Site, size = plotdata1$ActTotalOrderWt))+  coord_cartesian(ylim=c(-5, 5)) +ggtitle("Error with Point Size on Actual Order Size")
-
+ggplot(data=ByingredAll)+ geom_point(aes(x=ByingredAll$EndTime, y=ByingredAll$OrderDiff_inPerc,color= ByingredAll$Site, size = ByingredAll$ActTotalOrderWt))+  
+  #coord_cartesian(ylim=c(-5, 5)) +
+  ggtitle("Error with Point Size on Actual Order Size")
 
 ```
 
 P2 looks to have a tighter error range.
 For P1 smaller orders have more errors. This is could be because when there is a small order weight, the order was aborted. 
+
 ```{r}
 
 ggplot(data=plotdata1)+ geom_point(aes(x=plotdata1$EndTime, y=plotdata1$OrderDiff_inPerc,color= plotdata1$Site, size = plotdata1$IngredWeight))+
-  coord_cartesian(ylim=c(-10, 10)) +
+  #coord_cartesian(ylim=c(-10, 10)) +
   ggtitle("Error with Point Size on Actual Ingredient Size")
 
 ```
@@ -73,7 +85,6 @@ ggplot(data=plotdata1)+ geom_point(aes(x=plotdata1$EndTime, y=plotdata1$OrderDif
 Smaller ingredients seem to have a greater difference in total order percent. This is the opposite of what we would expect since this would mean a much greater % of the addition. 
 
 ```{r}
-
 ggplot(data=ByingredAll)+ geom_density(aes(x=ByingredAll$OrderDiff_inPerc,y = ..scaled.., color= ByingredAll$Site), bw= .1)+
   coord_cartesian(xlim=c(-.75, .75))
 
@@ -81,72 +92,41 @@ ggplot(data=ByingredAll)+ geom_density(aes(x=ByingredAll$OrderDiff_inPerc,y = ..
 ```
 
 Both plants show a difference distribution centered around 0 indicating errors even out more or less. 
-P1 has a slightly wider distribution than P2
+P1 has a slightly wider distribution than P2.
+These conclusions are shown by the error bar plot.
+
+```{r}
+ggplot(data= ByingredAll, aes(x=ByingredAll$Site, y=abs(ByingredAll$OrderDiff_inPerc))) +
+  stat_summary(fun.data = mean_se, geom = 'errorbar', position = 'dodge')+
+  ggtitle("Absolute Value of Error - Errorbars")
 
 
+
+```
 
 ##Comparision By Ingredient
 
-
-Specification is divided into target ranges depending on ingredient percent of total.
+Allowable deviation of actual ingredient % of blend from target ingredient % of blend is specified diffently for three ranges depending on ingredient percent of total.
 ```{r}
 #Assign size factors for ingredients
 ByingredAll$Size [ByingredAll$TarPercbyFirst <= 1] = "Small"
 ByingredAll$Size [ByingredAll$TarPercbyFirst < 3 & ByingredAll$TarPercbyFirst > 1] = "Med"
 ByingredAll$Size [ByingredAll$TarPercbyFirst >= 3] = "Large"
 ByingredAll$Size = factor(ByingredAll$Size)
-head(ByingredAll)
 
 ```
 
 
 
 ```{r}
-plotdata2 <- ByingredAll %>% filter(EndTime > "2019-01-01")
-
-ggplot(data=plotdata2)+ geom_point(aes(x=plotdata2$EndTime, y=plotdata2$OrderDiff_inPerc,color= plotdata2$Site))+  coord_cartesian(ylim=c(-5, 5))+
-facet_grid(rows = vars(Size))
-
-
-```
-
-Let's take a detailed look at each ingredient.
-
-Averages over all data. More data for P1
-```{r}
-ggplot(data=ByingredAll)+ geom_bar(aes(x=factor(ByingredAll$MaterialID), y=abs(ByingredAll$OrderDiff_inPerc),fill= ByingredAll$Site), stat = "summary", fun.y = "mean",position="dodge", width=.5)+
-  coord_cartesian(ylim=c(0, .25))+
-  theme(axis.text.x=element_text(angle = -90, hjust = 0))
-
-```
-```{r}
-ggplot(data=ByingredAll)+
-  coord_cartesian(ylim=c(0, .5))+
-  theme(axis.text.x=element_text(angle = -90, hjust = 0))+
-  geom_bar(aes(x=factor(ByingredAll$MaterialID), y=abs(ByingredAll$OrderDiff_inPerc),fill= ByingredAll$Site), stat = "summary", fun.y = "sd",position="dodge", width=.5)
-
-
+ggplot(data=ByingredAll)+ geom_point(aes(x=ByingredAll$EndTime, y=ByingredAll$OrderDiff_inPerc,color= ByingredAll$Site))+ 
+  #coord_cartesian(ylim=c(-5, 5))+
+  facet_grid(rows = vars(Size))
 
 
 ```
 
-```{r}
-ggplot(data= ByingredAll, aes(x=ByingredAll$Site, y=abs(ByingredAll$OrderDiff_inPerc))) +
-  stat_summary(fun.data = mean_se, geom = 'errorbar', position = 'dodge')+
-    coord_cartesian(ylim=c(0, .2))
-
-
-```
-```{r}
-ggplot(data= ByingredAll, aes(x=factor(ByingredAll$MaterialID), y=abs(ByingredAll$OrderDiff_inPerc),color= ByingredAll$Site)) +
-  stat_summary(fun.data = mean_se, geom = 'errorbar', position = 'dodge')+
-  #stat_summary(fun.y = "mean", colour = "red", size = 2, geom = "point")+
-    coord_cartesian(ylim=c(0, .2))+
-    theme(axis.text.x=element_text(angle = -90, hjust = 0))
-
-
-```
-
+Let's take a detailed look for each ingredient.
 
 ```{r}
 
@@ -155,10 +135,27 @@ plot1 <- ggplot(data=plotdata1)+ geom_point(aes(x=plotdata1$EndTime, y=plotdata1
   ggtitle("Error by Ingredient")+
   coord_cartesian(ylim=c(-5, 5))
 
-ggsave("Difference in Tar % of Order vs Actual by Ingredient Plot.pdf", plot = last_plot(), height = 40 , width = 7 , device = NULL)
+ggsave("Deviation from Target Ingredient Percent by Ingredient Plot.pdf", plot = last_plot(), height = 40 , width = 7 , device = NULL)
 
 
 ```
+
+
+```{r}
+ggplot(data= ByingredAll, aes(x=factor(ByingredAll$MaterialID), y=abs(ByingredAll$OrderDiff_inPerc),color= ByingredAll$Site)) +
+  stat_summary(fun.data = mean_se, geom = 'errorbar', position = 'dodge')+
+  #stat_summary(fun.y = "mean", colour = "red", size = 2, geom = "point")+
+  #coord_cartesian(ylim=c(0, .2))+
+  theme(axis.text.x=element_text(angle = -90, hjust = 0))+
+  ggtitle("Absolute Value of Error by Ingredient - Errorbars")
+
+
+```
+
+Averages errors is higher and wider standard deviations as was expected from the scatter plots by ingredient. 
+This is true to a varying degree depending on ingredient. Such observations may provide insight as to why P1 system is less accurate. 
+
+
 
 
 

@@ -57,7 +57,7 @@ P1FilteredPoints <- nrow(DataP1Filtered)
 
 print(P1OrigPoints)
 print(P1FilteredPoints)
-print(paste('Data reduced to ', P1FilteredPoints/P1OrigPoints*100,"%"))
+print(paste('P1 data reduced to ', P1FilteredPoints/P1OrigPoints*100,"%"))
 
 #This seems reasonable that <1% of data was removed, most probably due to duplicate rows. 
 

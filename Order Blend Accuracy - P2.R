@@ -14,7 +14,6 @@ DataP2 <-  BatchOrdersP2
 ##Data Cleaning
 
 
-
 #~~~~Missing Data
 #It is known that occasionally the actual weight for an ingredient for a batch will not get logged due to data collection errors. In such cases, the entire row in the Batch Additions table will be missing for that batch ingredient addition. When this happens, the total weight for that ingredient with the missing value will be erroroneous. Sometimes when this happens the ingredient weight gets logged as the next ingreidnet so there may be mulitple errors in weights for that order. Let's remove these orders from the data set completely. 
 
@@ -38,10 +37,8 @@ iDataP2Filtered <- DataP2 %>%  distinct(LOT_NUM,MaterialID, BATCH_NUM, .keep_all
 errororders <- DataP2 %>% group_by(LOT_NUM, MaterialID) %>% summarize(TarMax = max(TARGET), TarMin=min(TARGET), TarRange = TarMax-TarMin,ActMax = max(ACTUAL), ActMin=min(ACTUAL), ActRange = ActMax-ActMin )
 #head(missingdataordersP1)
 
-#create a data frame for orders that  have errors
+#create a data frame for orders that  have errors and remove data for these orders from data frame
 errorsdata <- errororders[errororders$TarRange > 100 | errororders$ActRange > 100,]
-
-#remove data that may cause issues
 iiDataP2Filtered <- iDataP2Filtered %>%  
                         filter(!LOT_NUM %in% 
                                  errorsdata$LOT_NUM)
@@ -51,7 +48,7 @@ iiDataP2Filtered <- iDataP2Filtered %>%
 #identify any batches with MaterialID =0 
 materialID0 <- DataP2 %>% group_by(LOT_NUM, MaterialID) %>% summarize(MatIDMin = min(MaterialID))
 
-#create a data frame for orders that  have a Material with ID = 0 and remove these orders
+#create a data frame for orders that  have a Material with ID = 0 and remove data for these orders from data frame
 orderserrorsMaterial <- materialID0[materialID0$MatIDMin ==0,]
 iiiDataP2Filtered <- iiDataP2Filtered %>%  
                         filter(!LOT_NUM %in% 
@@ -62,7 +59,7 @@ iiiDataP2Filtered <- iiDataP2Filtered %>%
 #identify any batches with only 1 batch - indicates it was probably aborted or something did not go as expected - we don't need to include these in our analysis 
 batches <- DataP2 %>% group_by(LOT_NUM) %>% summarize(TotalBatches = max(BATCH_NUM))
 
-#create a data frame for orders that  have a Material with ID = 0 and remove these orders
+#create a data frame for orders that  have a Material with ID = 0 and remove data for these orders from data frame
 only1batch <- batches[batches$TotalBatches ==1,]
 iiiiDataP2Filtered <- iiiDataP2Filtered %>%  
                         filter(!LOT_NUM %in% 
@@ -73,8 +70,6 @@ iiiiDataP2Filtered <- iiiDataP2Filtered %>%
 #Remove data with na, 
 #Remove any duplicate lines in case they arose, 
 #Remove data before 1/1/19. This is when data collection began so anything prior would be erroroneous. 
-
-#date was input wrong year on some. let's just omit this data for plotting vs time 
 iiiiiDataP2Filtered <- iiiiDataP2Filtered %>% filter(END_TIME > "2019-01-01") %>% 
   na.omit()
 
@@ -87,7 +82,7 @@ iiP2FilteredPoints <- nrow(iiiiiDataP2Filtered)
 
 print(iiP2OrigPoints)
 print(iiP2FilteredPoints)
-print(paste('Data reduced to ', iiP2FilteredPoints/iiP2OrigPoints*100,"%"))
+print(paste('P2 data reduced to ', iiP2FilteredPoints/iiP2OrigPoints*100,"%"))
 
 DataP2Filtered <- iiiiiDataP2Filtered
 
@@ -107,7 +102,7 @@ iiByingredP2 <- merge(x = iByingredP2, y =byorderP2, by = c("LOT_NUM"), all.x = 
 
 #~~~~Calc target ingredient weights of order
 #Calc first batch target total weight and add value to data frame
-#Any loads that don't have a batch 1 will not have a target calculated. 
+#Any loads that don't have a batch 1 will not have a target calculated
 firstbatchP2 <- DataP2Filtered %>% group_by(LOT_NUM) %>% filter(BATCH_NUM==1) %>% summarise( FirstBatchTarWt=sum(TARGET))
 iiiByingredP2 <- merge(x = iiByingredP2, y =firstbatchP2, by = c("LOT_NUM"), all.x = TRUE)
 
