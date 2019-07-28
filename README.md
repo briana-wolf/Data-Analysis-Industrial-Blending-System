@@ -7,5 +7,15 @@ Each plant has a powder blending system that produces finished product blends pe
 Note that the data used here is dummy data modified to be used for demonstration purposes to maintain confidentiality of the data set.
 
 ## Documents
-Data for Plant 1 is located in the P1 - Logger Tables.xlsx which would have been an export from a Microsoft Access database, and data for Plant 2 is located in P2- SQL Database Query3.xlsx which would have been an exported query of two SQL tables. R scripts (Order Blend Accuracy - P1.R and Order Blend Accuracy - P2.R) were developed for each plant to clean source data. The analysis was completed using R-Studio in the notebook Order Blend Accuracy - Plant Comparison.Rmd. 
+Plant 1
+Data for Plant 1 is located in the P1 - Logger Tables.xlsx which would have been an export from a Microsoft Access database.
+The Order Blend Accuracy - P1.R script executes the source data cleaning. 
+
+Plant 2
+Data for Plant 2 is located in P2- SQL Database Query3.xlsx which would have been an exported query of two SQL tables. 
+The Order Blend Accuracy - P2.R script executes the source data cleaning. 
+The P2 - Errors.Rmd looks at the progress that has been made to reduce data collection errors to improve the data set accuracy. 
+
+Comparison
+Analysis was completed using R-Studio in the notebook Order Blend Accuracy - Plant Comparison.Rmd. 
 
