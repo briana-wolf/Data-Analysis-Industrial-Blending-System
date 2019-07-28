@@ -1,12 +1,11 @@
-# Industrial-Blending-System
+# Data Analysis - Industrial Blending Systems Performance
 ## Description
-This Exploratory Data Analysis (EDA) was completed as part of Udacity.com’s Data Analyst Nanodegree.  The analysis is of Prosper.com loan data and was completed using R-Studio.  Prosper.com is a peer-to-peer loan service.  Contributions to improve the analysis are welcome.
+This data analysis was completed to assess the performance of two blending plants, specifically, to assess how Plant 2 (P2) performs compared to Plant 1 (P1). 
+
+Each plant has a powder blending system that produces finished product blends per a custom recipe at a specified order weight. Since order size is much greater than blender capacity, the order is made in a sequence of batches. The finished product quality is assessed by the accuracy of each ingredient's composition of the total order compared to the recipe target percent. 
+
+Note that the data used here is dummy data modified to be used for demonstration purposes to maintain confidentiality of the data set.
 
 ## Documents
-* ProsperLoanData project - Ott.rmd – This file contains the analysis that is written in R-Studio.  R-Studio is needed to read this file and can be downloaded at cran.rstudio.com .
-* ProsperLoanData.csv – This file contains the comma delimited loan data that is analyzed in this project.
-* ProsperLoanData_project_-_Ott.html – This HTML file is the final output of the analysis that is knitted in R-Studio.  This file can be opened in any Web browser.
-* References.txt – This file contains a list of websites that were referenced while developing the analysis in R.
+Data for Plant 1 is located in the P1 - Logger Tables.xlsx which would have been an export from a Microsoft Access database, and data for Plant 2 is located in P2- SQL Database Query3.xlsx which would have been an exported query of two SQL tables. R scripts (Order Blend Accuracy - P1.R and Order Blend Accuracy - P2.R) were developed for each plant to clean source data. The analysis was completed using R-Studio in the notebook Order Blend Accuracy - Plant Comparison.Rmd. 
 
-## License Info
-The MIT License applies to this repository, which is a short and simple permissive license.  The text of the license is contained in the file License.txt and was copied from the https://choosealicense.com/licenses/mit/ website.
