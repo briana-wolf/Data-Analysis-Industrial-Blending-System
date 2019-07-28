@@ -14,8 +14,10 @@ The Order Blend Accuracy - P1.R script executes the source data cleaning.
 Plant 2
 Data for Plant 2 is located in P2- SQL Database Query3.xlsx which would have been an exported query of two SQL tables. 
 The Order Blend Accuracy - P2.R script executes the source data cleaning. 
-The P2 - Errors.Rmd looks at the progress that has been made to reduce data collection errors to improve the data set accuracy. 
+The P2 - Analysis of Errors in Data.Rmd looks at the progress that has been made to reduce data collection errors to improve the data set accuracy. 
 
 Comparison
 Analysis was completed using R-Studio in the notebook Order Blend Accuracy - Plant Comparison.Rmd. 
+
+Various graphs are saved as pdfs from the notebooks as well for more detailed analysis and review. 
 
