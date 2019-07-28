@@ -1,0 +1,55 @@
+---
+title: "P2 - Data Collection Errors"
+output: html_notebook
+---
+
+#Import Data
+Packages are loaded in the Plant Comparisons notebook so run that notebook first. 
+```{r}
+source('Order Blend Accuracy - P2.R')
+```
+
+Create a data frame for orders that have errors identified and add a column to label error types.
+
+```{r}
+missingdata <- missingdataorders[missingdataorders$n_diffningreds > 1,]
+missingdata$ErrorType <- "Missing"
+errorsdata$ErrorType <- "Value Error"
+only1batch$ErrorType <- "One Batch"
+
+```
+
+Let's create a table of each lot, time and error type
+```{r}
+commoncols <- c("LOT_NUM","EndTime", "ErrorType")
+
+orderswitherrors <- missingdata %>% merge(errorsdata, all = TRUE) %>% merge(only1batch, all = TRUE)
+
+#simplify data frame to just contain columns on errors
+isimplist <- orderswitherrors[,colnames(orderswitherrors) %in% commoncols]
+
+#it's likely when there is an issue with one ingredient, that might through off other ingredient percents. The entire order data is omitted if there is an issue with one ingredient. For these reasons it makes sense to look at this error data listing each order once only. 
+#just use first error type though there may be multiple
+simplist <- isimplist %>% distinct(LOT_NUM, .keep_all = TRUE)
+head(simplist)
+
+
+```
+```{r}
+ggplot(data=simplist)+ geom_bar(aes(x=date(simplist$EndTime),color=simplist$ErrorType) , stat = 'count',)+
+  coord_cartesian(ylim=c(0, 10))+
+   theme(axis.text.x=element_text(angle = -90, hjust = 0))
+
+#Save the plot for more detailed viewing
+ggsave("P2 - error.pdf", plot = last_plot(), height = 10 , width = 40 , device = NULL)
+
+
+```
+Number of errors has decreased since initial rollout. A fix was completed mid July and data collection errors have decreaesd significantly since. 
+Errors for One Batch only indicate operational exercises and are not indicative of data collection issues.  
+
+
+
+
+
+
