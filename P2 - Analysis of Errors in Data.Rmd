@@ -41,7 +41,7 @@ ggplot(data=simplist)+ geom_bar(aes(x=date(simplist$EndTime),color=simplist$Erro
    theme(axis.text.x=element_text(angle = -90, hjust = 0))
 
 #Save the plot for more detailed viewing
-ggsave("P2 - error.pdf", plot = last_plot(), height = 10 , width = 40 , device = NULL)
+ggsave("P2 - Count of Errors in Data Collection Over Time.pdf", plot = last_plot(), height = 10 , width = 40 , device = NULL)
 
 
 ```
