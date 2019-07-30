@@ -1,6 +1,6 @@
 ##Import Data
 
-fileP2 <- './P2 - SQL Database Query3.xlsx'
+fileP2 <- './P2 - SQL Database Query4.xlsx'
 sheetnameP2a <- 'SQL Batch_Additions'
 sheetnameP2b <- 'SQL Orders'
 
@@ -12,13 +12,13 @@ BatchOrdersP2 <- merge(x = BatchP2, y = OrdersP2, by = "LOT_NUM", all.x = TRUE)
 DataP2 <-  BatchOrdersP2
 
 ##Data Cleaning
-
+#EndTimes added for error monitoring. 
 
 #~~~~Missing Data
 #It is known that occasionally the actual weight for an ingredient for a batch will not get logged due to data collection errors. In such cases, the entire row in the Batch Additions table will be missing for that batch ingredient addition. When this happens, the total weight for that ingredient with the missing value will be erroroneous. Sometimes when this happens the ingredient weight gets logged as the next ingreidnet so there may be mulitple errors in weights for that order. Let's remove these orders from the data set completely. 
 
 #To identify orders that have missing data, assume that the # of ingredients would not be the same for each batch of the load. 
-missingdataorders <- DataP2 %>% group_by(LOT_NUM,BATCH_NUM) %>% summarize(ningreds=n_distinct(MaterialID)) %>% group_by(LOT_NUM) %>% summarize(n_diffningreds=n_distinct(ningreds))
+missingdataorders <- DataP2 %>% group_by(LOT_NUM,BATCH_NUM) %>% summarize(ningreds=n_distinct(MaterialID),EndTime = max(END_TIME)) %>% group_by(LOT_NUM) %>% summarize(n_diffningreds=n_distinct(ningreds), EndTime = max(EndTime))
 
 #create a data frame for orders that don't have missing data
 nomissingdata <- missingdataorders[missingdataorders$n_diffningreds == 1,]
@@ -27,18 +27,17 @@ nomissingdata <- missingdataorders[missingdataorders$n_diffningreds == 1,]
 iDataP2Filtered <- DataP2 %>%  distinct(LOT_NUM,MaterialID, BATCH_NUM, .keep_all = TRUE) %>%
                         filter(LOT_NUM %in% nomissingdata$LOT_NUM)
 
-
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~``
 
 
 #~~~~Wrong Values Errors
 
 #to identify orders that have errors in the weights, we assume that the target range should not be more than 100 lbs   
-errororders <- DataP2 %>% group_by(LOT_NUM, MaterialID) %>% summarize(TarMax = max(TARGET), TarMin=min(TARGET), TarRange = TarMax-TarMin,ActMax = max(ACTUAL), ActMin=min(ACTUAL), ActRange = ActMax-ActMin )
+errororders <- DataP2 %>% group_by(LOT_NUM, MaterialID) %>% summarize(TarMax = max(TARGET), TarMin=min(TARGET), TarRange = TarMax-TarMin,ActMax = max(ACTUAL), ActMin=min(ACTUAL), ActRange = ActMax-ActMin,EndTime = max(END_TIME) )
 #head(missingdataordersP1)
 
 #create a data frame for orders that  have errors and remove data for these orders from data frame
-errorsdata <- errororders[errororders$TarRange > 100 | errororders$ActRange > 100,]
+errorsdata <- errororders[errororders$TarRange > 1000 | errororders$ActRange > 1000,]
 iiDataP2Filtered <- iDataP2Filtered %>%  
                         filter(!LOT_NUM %in% 
                                  errorsdata$LOT_NUM)
@@ -46,7 +45,7 @@ iiDataP2Filtered <- iDataP2Filtered %>%
 
 #~~~~MatID Errors
 #identify any batches with MaterialID =0 
-materialID0 <- DataP2 %>% group_by(LOT_NUM, MaterialID) %>% summarize(MatIDMin = min(MaterialID))
+materialID0 <- DataP2 %>% group_by(LOT_NUM, MaterialID) %>% summarize(MatIDMin = min(MaterialID),EndTime = max(END_TIME))
 
 #create a data frame for orders that  have a Material with ID = 0 and remove data for these orders from data frame
 orderserrorsMaterial <- materialID0[materialID0$MatIDMin ==0,]
@@ -57,7 +56,7 @@ iiiDataP2Filtered <- iiDataP2Filtered %>%
 
 #~~~~Single Batch Errors
 #identify any batches with only 1 batch - indicates it was probably aborted or something did not go as expected - we don't need to include these in our analysis 
-batches <- DataP2 %>% group_by(LOT_NUM) %>% summarize(TotalBatches = max(BATCH_NUM))
+batches <- DataP2 %>% group_by(LOT_NUM) %>% summarize(TotalBatches = max(BATCH_NUM),EndTime = max(END_TIME))
 
 #create a data frame for orders that  have a Material with ID = 0 and remove data for these orders from data frame
 only1batch <- batches[batches$TotalBatches ==1,]
@@ -107,7 +106,7 @@ firstbatchP2 <- DataP2Filtered %>% group_by(LOT_NUM) %>% filter(BATCH_NUM==1) %>
 iiiByingredP2 <- merge(x = iiByingredP2, y =firstbatchP2, by = c("LOT_NUM"), all.x = TRUE)
 
 #Calc first batch target weight for each ingredient and add value to data frame
-firstbatchingredP2 <- DataP2Filtered %>% group_by(LOT_NUM, MaterialID) %>%  arrange(BATCH_NUM)%>% summarize(FirstBatchIngredWeight = first(TARGET))
+firstbatchingredP2 <- DataP2Filtered %>% group_by(LOT_NUM, MaterialID) %>%  filter(BATCH_NUM==1) %>% summarize(FirstBatchIngredWeight = first(TARGET))
 iiiiByingredP2 <- merge(x = iiiByingredP2, y =firstbatchingredP2, by = c("LOT_NUM", "MaterialID"), all.x = TRUE)
 
 #Set all iterations equal to the dataframe for future use
@@ -119,4 +118,6 @@ ByingredP2$ActPerc <- ByingredP2$IngredWeight/ByingredP2$ActTotalOrderWt*100
 
 #~~~~Calc difference in actual ingredient % to target ingredient % for the order 
 ByingredP2$OrderDiff_inPerc <- ByingredP2$ActPerc -ByingredP2$TarPercbyFirst 
+
+
 

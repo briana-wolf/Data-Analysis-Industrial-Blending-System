@@ -1,7 +1,7 @@
 
 ##Import Data 
 
-fileP1 <- './P1 - logger tables.xlsx'
+fileP1 <- './P1 - logger tables1.xlsx'
 sheetnameP1 <- 'export data'
 
 DataP1 <- read_excel(fileP1,sheet = sheetnameP1,col_names = TRUE)

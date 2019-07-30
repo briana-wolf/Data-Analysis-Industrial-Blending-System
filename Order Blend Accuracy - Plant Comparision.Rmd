@@ -39,6 +39,7 @@ Such facts should be considered with all conclusions.
 head(ByingredP2)
 head(ByingredP1)
 
+ 
 ```
 
 Combine data for plotting.
@@ -57,6 +58,8 @@ iByingredAll <- merge(x = ByingredP1, y = ByingredP2, all = TRUE)
 #Remove na in key KPI column
 ByingredAll <- iByingredAll[!is.na(iByingredAll$OrderDiff_inPerc),]
 
+ByingredP2[ByingredP2$LOT_NUM==41459448,]
+
 ```
 <P style="page-break-before: always">
 
@@ -67,7 +70,7 @@ ByingredAll <- iByingredAll[!is.na(iByingredAll$OrderDiff_inPerc),]
 ```{r}
 ggplot(data=ByingredAll)+ geom_point(aes(x=ByingredAll$EndTime, y=ByingredAll$OrderDiff_inPerc,color= ByingredAll$Site, size = ByingredAll$ActTotalOrderWt))+  
   #coord_cartesian(ylim=c(-5, 5)) +
-  ggtitle("Error with Point Size on Actual Order Size")
+  labs(title = "Error from Target Ingredient Composition per Order - Relative Order Size", x = NULL, y= "Difference in Percent", color = "Plant", size = "Actual Total Order Weight, lbs")
 
 ```
 
@@ -76,17 +79,20 @@ For P1 smaller orders have more errors. This is could be because when there is a
 
 ```{r}
 
-ggplot(data=plotdata1)+ geom_point(aes(x=plotdata1$EndTime, y=plotdata1$OrderDiff_inPerc,color= plotdata1$Site, size = plotdata1$IngredWeight))+
+ggplot(data=ByingredAll)+ geom_point(aes(x=ByingredAll$EndTime, y=ByingredAll$OrderDiff_inPerc,color= ByingredAll$Site, size = ByingredAll$IngredWeight))+
   #coord_cartesian(ylim=c(-10, 10)) +
-  ggtitle("Error with Point Size on Actual Ingredient Size")
+  labs(title = "Error from Target Ingredient Composition per Order - Relative Ingred Size", x = NULL, y= "Difference in Percent", color = "Plant", size = "Actual Total Ingredient Weight/Order, lbs")
+
 
 ```
 
 Smaller ingredients seem to have a greater difference in total order percent. This is the opposite of what we would expect since this would mean a much greater % of the addition. 
 
 ```{r}
-ggplot(data=ByingredAll)+ geom_density(aes(x=ByingredAll$OrderDiff_inPerc,y = ..scaled.., color= ByingredAll$Site), bw= .1)+
-  coord_cartesian(xlim=c(-.75, .75))
+ggplot(data=ByingredAll)+ geom_density(aes(x=ByingredAll$OrderDiff_inPerc,y = ..scaled.., color= ByingredAll$Site), bw= .03)+
+  coord_cartesian(xlim=c(-.4, .4))+
+  labs(title = "Distribution in Error from Target Ingredient Composition per Order", y = NULL, x= "Difference in Percent", color = "Plant")
+
 
 
 ```
@@ -98,8 +104,7 @@ These conclusions are shown by the error bar plot.
 ```{r}
 ggplot(data= ByingredAll, aes(x=ByingredAll$Site, y=abs(ByingredAll$OrderDiff_inPerc))) +
   stat_summary(fun.data = mean_se, geom = 'errorbar', position = 'dodge')+
-  ggtitle("Absolute Value of Error - Errorbars")
-
+  labs(title = "Absolute Value of Error - Errorbars", x = NULL, y= "Average of Absolute Value Difference in Percent")
 
 
 ```
@@ -114,14 +119,15 @@ ByingredAll$Size [ByingredAll$TarPercbyFirst < 3 & ByingredAll$TarPercbyFirst > 
 ByingredAll$Size [ByingredAll$TarPercbyFirst >= 3] = "Large"
 ByingredAll$Size = factor(ByingredAll$Size)
 
+
 ```
-
-
 
 ```{r}
 ggplot(data=ByingredAll)+ geom_point(aes(x=ByingredAll$EndTime, y=ByingredAll$OrderDiff_inPerc,color= ByingredAll$Site))+ 
   #coord_cartesian(ylim=c(-5, 5))+
-  facet_grid(rows = vars(Size))
+  facet_grid(rows = vars(Size))+
+  labs(title = "Error from Target Ingredient Composition per Order - by Ingredient Size", x = NULL, y= "Difference in Percent", color = "Plant")
+
 
 
 ```
@@ -147,7 +153,7 @@ ggplot(data= ByingredAll, aes(x=factor(ByingredAll$MaterialID), y=abs(ByingredAl
   #stat_summary(fun.y = "mean", colour = "red", size = 2, geom = "point")+
   #coord_cartesian(ylim=c(0, .2))+
   theme(axis.text.x=element_text(angle = -90, hjust = 0))+
-  ggtitle("Absolute Value of Error by Ingredient - Errorbars")
+  labs(title = "Absolute Value of Error from Target Ingredient Composition per Order - Errorbars", x = NULL, y= "Difference in Percent", color = "Plant")
 
 
 ```
